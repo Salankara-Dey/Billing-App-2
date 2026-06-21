@@ -112,7 +112,6 @@ export default function InventoryView() {
   
   // Filter States
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [stockFilter, setStockFilter] = useState(''); // 'low', 'out', 'all'
 
   // Modals
@@ -134,6 +133,22 @@ export default function InventoryView() {
     quantity: '1',
     notes: ''
   });
+
+  // Quick Add Products state (Invoice format)
+  const [newProducts, setNewProducts] = useState<Array<{
+    name: string;
+    brand: string;
+    unit: string;
+    hsn_code: string;
+    gst_percentage: string;
+    purchase_price: string;
+    selling_price: string;
+    opening_stock: string;
+    supplier_id: string;
+    notes: string;
+  }>>([
+    { name: '', brand: 'General', unit: 'Nos', hsn_code: '85094010', gst_percentage: '18', purchase_price: '0', selling_price: '0', opening_stock: '0', supplier_id: '', notes: '' }
+  ]);
 
   // Bulk Import State
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -160,6 +175,9 @@ export default function InventoryView() {
 
       const sups = await dbQuery('SELECT id, name FROM suppliers');
       setSuppliers(sups);
+      if (sups && sups.length > 0) {
+        setNewProducts(prev => prev.map(p => p.supplier_id ? p : { ...p, supplier_id: sups[0].id.toString() }));
+      }
 
       const movs = await dbQuery(`
         SELECT st.*, p.name as product_name 
@@ -211,18 +229,18 @@ export default function InventoryView() {
 
     const args = [
       productForm.name,
-      productForm.sku || `SKU-${Date.now().toString().slice(-6)}`,
-      productForm.barcode || `BC-${Date.now().toString().slice(-6)}`,
-      productForm.category,
+      editingProduct ? editingProduct.sku : `SKU-${Date.now().toString().slice(-6)}`,
+      editingProduct ? editingProduct.barcode : `BC-${Date.now().toString().slice(-6)}`,
+      editingProduct ? editingProduct.category : 'General',
       productForm.brand,
       productForm.unit,
       productForm.hsn_code,
       parseFloat(productForm.gst_percentage) || 0,
       parseFloat(productForm.purchase_price) || 0,
       parseFloat(productForm.selling_price) || 0,
-      parseFloat(productForm.mrp) || 0,
+      editingProduct ? editingProduct.mrp : parseFloat(productForm.selling_price) || 0,
       parseInt(productForm.opening_stock) || 0,
-      parseInt(productForm.reorder_level) || 0,
+      editingProduct ? editingProduct.reorder_level : 5,
       productForm.supplier_id ? parseInt(productForm.supplier_id) : null,
       productForm.notes
     ];
@@ -259,6 +277,67 @@ export default function InventoryView() {
       loadData();
     } catch (err: any) {
       alert(`Save failed: ${err.message || err}`);
+    }
+  };
+
+  const handleSaveNewProducts = async () => {
+    const validRows = newProducts.filter(p => p.name.trim() !== '');
+    if (validRows.length === 0) {
+      return alert('Please enter at least one product name before saving.');
+    }
+    if (validRows.some(p => !p.hsn_code.trim())) {
+      return alert('All products must have an HSN/SAC Code.');
+    }
+
+    try {
+      let savedCount = 0;
+      for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
+        const uniqueSuffix = `${Date.now()}-${i}-${Math.floor(Math.random() * 1000)}`;
+        const sku = `SKU-${uniqueSuffix}`;
+        const barcode = `BC-${uniqueSuffix}`;
+        const category = 'General';
+        const reorder_level = 5;
+        const mrp = parseFloat(row.selling_price) || 0;
+
+        const args = [
+          row.name.trim(),
+          sku,
+          barcode,
+          category,
+          row.brand.trim() || 'General',
+          row.unit,
+          row.hsn_code.trim(),
+          parseFloat(row.gst_percentage) || 0,
+          parseFloat(row.purchase_price) || 0,
+          parseFloat(row.selling_price) || 0,
+          mrp,
+          parseInt(row.opening_stock) || 0,
+          reorder_level,
+          row.supplier_id ? parseInt(row.supplier_id) : null,
+          row.notes.trim()
+        ];
+
+        const res = await dbRun(`
+          INSERT INTO products (name, sku, barcode, category, brand, unit, hsn_code, gst_percentage, 
+                               purchase_price, selling_price, mrp, opening_stock, current_stock, available_stock, reorder_level, supplier_id, notes)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $12, $13, $14, $15)
+        `, args);
+
+        if (res.lastID && parseInt(row.opening_stock) > 0) {
+          await dbRun(`
+            INSERT INTO stock_transactions (product_id, transaction_type, quantity, reference_id, notes)
+            VALUES ($1, $2, $3, $4, $5)
+          `, [res.lastID, 'Stock In', parseInt(row.opening_stock), 'OPENING_STOCK', 'Initial opening stock setup']);
+        }
+        savedCount++;
+      }
+
+      alert(`🎉 Successfully saved ${savedCount} products to inventory!`);
+      setNewProducts([{ name: '', brand: 'General', unit: 'Nos', hsn_code: '85094010', gst_percentage: '18', purchase_price: '0', selling_price: '0', opening_stock: '0', supplier_id: suppliers[0]?.id?.toString() || '', notes: '' }]);
+      loadData();
+    } catch (err: any) {
+      alert(`Failed to save products: ${err.message || err}`);
     }
   };
 
@@ -477,8 +556,6 @@ export default function InventoryView() {
                           (p.sku && p.sku.toLowerCase().includes(search.toLowerCase())) ||
                           (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()));
     
-    const matchesCategory = categoryFilter === '' || p.category === categoryFilter;
-    
     let matchesStock = true;
     if (stockFilter === 'low') {
       matchesStock = p.current_stock <= p.reorder_level;
@@ -486,10 +563,8 @@ export default function InventoryView() {
       matchesStock = p.current_stock <= 0;
     }
 
-    return matchesSearch && matchesCategory && matchesStock;
+    return matchesSearch && matchesStock;
   });
-
-  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
 
   const fmtCurrency = (n: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
@@ -529,7 +604,212 @@ export default function InventoryView() {
         <>
           <div className="section-header">
             <h3>Inventory Registry ({filteredProducts.length} items)</h3>
-            <button className="btn btn-primary" onClick={handleOpenAdd}>+ Create Product</button>
+          </div>
+
+          {/* Quick Product Entry Grid (Invoice Format) */}
+          <div className="card" style={{ padding: 0, marginBottom: '24px', border: '1px solid #cbd5e1' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--dark)' }}>📦 Quick Add Products (Invoice Format)</h4>
+              <button 
+                type="button"
+                className="btn btn-secondary btn-sm" 
+                onClick={() => {
+                  setNewProducts(prev => [...prev, { name: '', brand: 'General', unit: 'Nos', hsn_code: '85094010', gst_percentage: '18', purchase_price: '0', selling_price: '0', opening_stock: '0', supplier_id: suppliers[0]?.id?.toString() || '', notes: '' }]);
+                }}
+                style={{ padding: '5px 10px', fontWeight: 600 }}
+              >
+                + Add Empty Row
+              </button>
+            </div>
+            
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ minWidth: '1000px', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    <th style={{ width: '40px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>#</th>
+                    <th style={{ width: '280px', padding: '8px', fontSize: '11px' }}>PRODUCT TITLE/NAME *</th>
+                    <th style={{ width: '120px', padding: '8px', fontSize: '11px' }}>BRAND</th>
+                    <th style={{ width: '90px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>UNIT</th>
+                    <th style={{ width: '110px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>HSN/SAC *</th>
+                    <th style={{ width: '90px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>GST TAX %</th>
+                    <th style={{ width: '130px', padding: '8px', fontSize: '11px', textAlign: 'right' }}>BUY PRICE (EXCL. GST) *</th>
+                    <th style={{ width: '130px', padding: '8px', fontSize: '11px', textAlign: 'right' }}>SELL PRICE (EXCL. GST) *</th>
+                    <th style={{ width: '100px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>INITIAL STOCK</th>
+                    <th style={{ width: '180px', padding: '8px', fontSize: '11px' }}>PREFERRED SUPPLIER</th>
+                    <th style={{ width: '180px', padding: '8px', fontSize: '11px' }}>REMARKS/NOTES</th>
+                    <th style={{ width: '40px', padding: '8px', textAlign: 'center' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newProducts.map((prod, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '6px', textAlign: 'center', fontWeight: 600, color: 'var(--gray)', fontSize: '12px' }}>
+                        {idx + 1}
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Enter product title..." 
+                          value={prod.name}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, name: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="text" 
+                          value={prod.brand}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, brand: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <select 
+                          value={prod.unit}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, unit: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '5px 4px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        >
+                          {['Nos', 'Kgs', 'Ltrs', 'Boxes', 'Pkts'].map(u => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="text" 
+                          value={prod.hsn_code}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, hsn_code: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <select 
+                          value={prod.gst_percentage}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, gst_percentage: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '5px 4px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        >
+                          {[0, 5, 12, 18, 28].map(g => (
+                            <option key={g} value={g.toString()}>{g}%</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          value={prod.purchase_price}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, purchase_price: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', textAlign: 'right', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          value={prod.selling_price}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, selling_price: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', textAlign: 'right', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="number" 
+                          value={prod.opening_stock}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, opening_stock: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <select 
+                          value={prod.supplier_id}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, supplier_id: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '5px 4px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        >
+                          <option value="">— Select Supplier —</option>
+                          {suppliers.map(s => (
+                            <option key={s.id} value={s.id.toString()}>{s.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: '6px' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Notes..."
+                          value={prod.notes}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, notes: val } : p));
+                          }}
+                          style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newProducts.length === 1) {
+                              setNewProducts([{ name: '', brand: 'General', unit: 'Nos', hsn_code: '85094010', gst_percentage: '18', purchase_price: '0', selling_price: '0', opening_stock: '0', supplier_id: suppliers[0]?.id?.toString() || '', notes: '' }]);
+                            } else {
+                              setNewProducts(prev => prev.filter((_, i) => i !== idx));
+                            }
+                          }}
+                          style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: '15px', cursor: 'pointer', padding: '4px' }}
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#f8fafc' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setNewProducts([{ name: '', brand: 'General', unit: 'Nos', hsn_code: '85094010', gst_percentage: '18', purchase_price: '0', selling_price: '0', opening_stock: '0', supplier_id: suppliers[0]?.id?.toString() || '', notes: '' }]);
+                }}
+              >
+                Clear Grid
+              </button>
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                onClick={handleSaveNewProducts}
+                style={{ background: 'var(--brand)' }}
+              >
+                💾 Save Products to Inventory
+              </button>
+            </div>
           </div>
 
           {/* Filters Bar */}
@@ -542,12 +822,6 @@ export default function InventoryView() {
                   value={search} 
                   onChange={e => setSearch(e.target.value)} 
                 />
-              </div>
-              <div className="form-group" style={{ width: '180px' }}>
-                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-                  <option value="">All Categories</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
               </div>
               <div className="form-group" style={{ width: '180px' }}>
                 <select value={stockFilter} onChange={e => setStockFilter(e.target.value)}>
@@ -571,9 +845,6 @@ export default function InventoryView() {
                   <thead>
                     <tr>
                       <th>Product details</th>
-                      <th>SKU</th>
-                      <th>Barcode</th>
-                      <th>Category</th>
                       <th>Brand</th>
                       <th>Purchase / Sale</th>
                       <th>GST</th>
@@ -588,9 +859,6 @@ export default function InventoryView() {
                           <div style={{ fontWeight: 600, color: 'var(--dark)' }}>{p.name}</div>
                           {p.hsn_code && <div style={{ fontSize: '10px', color: 'var(--gray)' }}>HSN: {p.hsn_code}</div>}
                         </td>
-                        <td><code style={{ fontSize: '11px', color: 'var(--gray)' }}>{p.sku || '—'}</code></td>
-                        <td><code style={{ fontSize: '11px', color: 'var(--gray)' }}>{p.barcode || '—'}</code></td>
-                        <td><span className="badge badge-blue">{p.category}</span></td>
                         <td>{p.brand}</td>
                         <td>
                           <div style={{ fontSize: '12px' }}>Buy: <strong style={{ color: 'var(--gray)' }}>{fmtCurrency(p.purchase_price)}</strong></div>
@@ -1289,45 +1557,6 @@ export default function InventoryView() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>SKU Code</label>
-                  <input 
-                    type="text" 
-                    value={productForm.sku} 
-                    onChange={e => setProductForm(prev => ({ ...prev, sku: e.target.value }))} 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Barcode / GTIN</label>
-                  <input 
-                    type="text" 
-                    value={productForm.barcode} 
-                    onChange={e => setProductForm(prev => ({ ...prev, barcode: e.target.value }))} 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Category</label>
-                  <input 
-                    type="text" 
-                    list="category-options"
-                    value={productForm.category} 
-                    onChange={e => {
-                      const val = e.target.value;
-                      setProductForm(prev => {
-                        const updated = { ...prev, category: val };
-                        if (DEFAULT_CATEGORY_HSN[val]) {
-                          updated.hsn_code = DEFAULT_CATEGORY_HSN[val];
-                        }
-                        return updated;
-                      });
-                    }} 
-                  />
-                  <datalist id="category-options">
-                    {Object.keys(DEFAULT_CATEGORY_HSN).map(cat => (
-                      <option key={cat} value={cat} />
-                    ))}
-                  </datalist>
-                </div>
-                <div className="form-group">
                   <label>Brand</label>
                   <input 
                     type="text" 
@@ -1383,28 +1612,11 @@ export default function InventoryView() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>MRP (Max Retail price)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    value={productForm.mrp} 
-                    onChange={e => setProductForm(prev => ({ ...prev, mrp: e.target.value }))} 
-                  />
-                </div>
-                <div className="form-group">
                   <label>Opening Stock</label>
                   <input 
                     type="number" 
                     value={productForm.opening_stock} 
                     onChange={e => setProductForm(prev => ({ ...prev, opening_stock: e.target.value }))} 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Reorder Threshold Level</label>
-                  <input 
-                    type="number" 
-                    value={productForm.reorder_level} 
-                    onChange={e => setProductForm(prev => ({ ...prev, reorder_level: e.target.value }))} 
                   />
                 </div>
                 <div className="form-group">
