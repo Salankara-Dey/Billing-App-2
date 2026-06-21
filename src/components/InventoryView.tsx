@@ -752,7 +752,6 @@ export default function InventoryView() {
                           }}
                           style={{ width: '100%', padding: '5px 4px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
                         >
-                          <option value="">— Select Supplier —</option>
                           {suppliers.map(s => (
                             <option key={s.id} value={s.id.toString()}>{s.name}</option>
                           ))}
@@ -1625,7 +1624,6 @@ export default function InventoryView() {
                     value={productForm.supplier_id} 
                     onChange={e => setProductForm(prev => ({ ...prev, supplier_id: e.target.value }))}
                   >
-                    <option value="">— Select Supplier —</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
