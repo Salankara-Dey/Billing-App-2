@@ -31,7 +31,7 @@ export default function Home() {
   const PAGE_TITLES: Record<string, string> = {
     dashboard: 'Dashboard Overview',
     invoices: 'Invoice Records',
-    billing: 'Vyapar-style Billing Terminal',
+    billing: 'Billing Terminal',
     inventory: 'Inventory & Stock Master',
     customers: 'Customer Master Directory',
     suppliers: 'Supplier Master Directory',
