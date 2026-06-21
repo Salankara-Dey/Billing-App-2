@@ -175,9 +175,6 @@ export default function InventoryView() {
 
       const sups = await dbQuery('SELECT id, name FROM suppliers');
       setSuppliers(sups);
-      if (sups && sups.length > 0) {
-        setNewProducts(prev => prev.map(p => p.supplier_id ? p : { ...p, supplier_id: sups[0].id.toString() }));
-      }
 
       const movs = await dbQuery(`
         SELECT st.*, p.name as product_name 
@@ -635,7 +632,6 @@ export default function InventoryView() {
                     <th style={{ width: '130px', padding: '8px', fontSize: '11px', textAlign: 'right' }}>BUY PRICE (EXCL. GST) *</th>
                     <th style={{ width: '130px', padding: '8px', fontSize: '11px', textAlign: 'right' }}>SELL PRICE (EXCL. GST) *</th>
                     <th style={{ width: '100px', padding: '8px', fontSize: '11px', textAlign: 'center' }}>INITIAL STOCK</th>
-                    <th style={{ width: '180px', padding: '8px', fontSize: '11px' }}>PREFERRED SUPPLIER</th>
                     <th style={{ width: '180px', padding: '8px', fontSize: '11px' }}>REMARKS/NOTES</th>
                     <th style={{ width: '40px', padding: '8px', textAlign: 'center' }}></th>
                   </tr>
@@ -743,20 +739,7 @@ export default function InventoryView() {
                           style={{ width: '100%', padding: '6px 8px', fontSize: '12.5px', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1' }}
                         />
                       </td>
-                      <td style={{ padding: '6px' }}>
-                        <select 
-                          value={prod.supplier_id}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, supplier_id: val } : p));
-                          }}
-                          style={{ width: '100%', padding: '5px 4px', fontSize: '12.5px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
-                        >
-                          {suppliers.map(s => (
-                            <option key={s.id} value={s.id.toString()}>{s.name}</option>
-                          ))}
-                        </select>
-                      </td>
+
                       <td style={{ padding: '6px' }}>
                         <input 
                           type="text" 
@@ -1618,15 +1601,7 @@ export default function InventoryView() {
                     onChange={e => setProductForm(prev => ({ ...prev, opening_stock: e.target.value }))} 
                   />
                 </div>
-                <div className="form-group">
-                  <label>Preferred Supplier</label>
-                  <select 
-                    value={productForm.supplier_id} 
-                    onChange={e => setProductForm(prev => ({ ...prev, supplier_id: e.target.value }))}
-                  >
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
+
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label>Remarks / Notes</label>
                   <textarea 
