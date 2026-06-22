@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: "Saral — Billing & Inventory Suite",
-  description: "Professional billing, inventory, reporting, and customer-supplier management suite for Saral.",
+  description: "Professional billing, inventory, reporting, and customer-supplier management suite for Jiya's Arcade.",
 };
 
 export default function RootLayout({

@@ -20,7 +20,7 @@ export default function SettingsView() {
 
   // Business profile settings state
   const [profile, setProfile] = useState({
-    name: "Saral",
+    name: "Jiya's Arcade",
     address: 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri',
     phone: '9046726365',
     gstin: '19ACRPD0341C1Z0',
@@ -74,7 +74,7 @@ export default function SettingsView() {
         `, [profile.name, profile.address, profile.phone, profile.gstin, profile.email, profile.state, profile.logo_base64, profile.bank_details, profile.upi_id]);
       }
       
-      alert('✅ Saral profile details updated successfully!');
+      alert("✅ Jiya's Arcade profile details updated successfully!");
     } catch (err: any) {
       alert(`Failed to save settings: ${err.message || err}`);
     }
@@ -166,7 +166,7 @@ export default function SettingsView() {
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `saral-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `jiyas-arcade-backup-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -194,7 +194,7 @@ export default function SettingsView() {
         const backup = JSON.parse(text);
 
         if (backup?.meta?.app !== 'ElectroMart') {
-          throw new Error('Invalid file format: Backup file is not a valid Saral/ElectroMart backup.');
+          throw new Error("Invalid file format: Backup file is not a valid Jiya's Arcade/ElectroMart backup.");
         }
 
         setStatusMsg('Clearing database tables...');
@@ -308,7 +308,7 @@ export default function SettingsView() {
       {/* Business Profile card (Full Width) */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', color: 'var(--dark)' }}>
-          🏢 Saral Profile Settings
+          🏢 Jiya's Arcade Profile Settings
         </h4>
         <form onSubmit={handleSaveProfile}>
           <div className="form-grid" style={{ marginBottom: '20px' }}>
@@ -362,7 +362,7 @@ export default function SettingsView() {
               <label>UPI ID (for billing display)</label>
               <input
                 type="text"
-                placeholder="e.g. saral@okaxis"
+                placeholder="e.g. jiyasarcade@okaxis"
                 value={profile.upi_id}
                 onChange={e => setProfile(prev => ({ ...prev, upi_id: e.target.value }))}
               />

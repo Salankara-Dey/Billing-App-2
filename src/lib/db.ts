@@ -353,7 +353,7 @@ async function initSqliteSchema(db: Database) {
   if (profile.length === 0) {
     await db.run(`
       INSERT OR IGNORE INTO business_profile (id, name, address, phone, gstin, email, state)
-      VALUES (1, 'Saral', 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri', '9046726365', '19ACRPD0341C1Z0', 'joydeep.dey1971@gmail.com', '19-West Bengal')
+      VALUES (1, 'Jiya''s Arcade', 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri', '9046726365', '19ACRPD0341C1Z0', 'joydeep.dey1971@gmail.com', '19-West Bengal')
     `);
   }
 
@@ -668,7 +668,7 @@ async function initPostgresSchema(pool: Pool) {
     // Seed default business profile if not exists
     await client.query(`
       INSERT INTO business_profile (id, name, address, phone, gstin, email, state)
-      VALUES (1, 'Saral', 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri', '9046726365', '19ACRPD0341C1Z0', 'joydeep.dey1971@gmail.com', '19-West Bengal')
+      VALUES (1, 'Jiya''s Arcade', 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri', '9046726365', '19ACRPD0341C1Z0', 'joydeep.dey1971@gmail.com', '19-West Bengal')
       ON CONFLICT (id) DO NOTHING;
     `);
 

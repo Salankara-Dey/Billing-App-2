@@ -40,7 +40,7 @@ export default function MigrationAssistant({ onMigrationComplete }: { onMigratio
       setStatusText('Setting up default supplier...');
       const defaultSupplierRes = await dbRun(
         `INSERT INTO suppliers (name, mobile, email, address) VALUES ($1, $2, $3, $4)`,
-        ['General Supplier', '0000000000', 'supplier@saral.in', 'Bhubaneswar']
+        ['General Supplier', '0000000000', 'supplier@jiyasarcade.in', 'Bhubaneswar']
       );
       const supplierId = defaultSupplierRes.lastID || 1;
 

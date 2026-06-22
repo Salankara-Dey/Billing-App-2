@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, setActivePage, role = 'Admin' }: SidebarProps) {
-  const [businessName, setBusinessName] = useState("SARAL");
+  const [businessName, setBusinessName] = useState("JIYA'S ARCADE");
 
   useEffect(() => {
     loadBusinessName();
@@ -48,15 +48,10 @@ export default function Sidebar({ activePage, setActivePage, role = 'Admin' }: S
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
 
-  // Helper to render the logo text (rendered strictly in white)
-  const renderLogoText = () => {
-    return businessName.toUpperCase().trim() || "SARAL";
-  };
-
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <h1>{renderLogoText()}</h1>
+        <h1>SARAL</h1>
         <p>Billing & Inventory Suite</p>
       </div>
       

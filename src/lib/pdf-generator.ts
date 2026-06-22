@@ -6,7 +6,7 @@ const HSN_MAP: Record<number, string> = { 28: '85287300', 18: '84181000', 12: '8
 export async function generatePDF(invoice: any, customer: any, items: any[]) {
   // Load dynamic business profile settings
   let business = {
-    name: "Saral",
+    name: "Jiya's Arcade",
     address: 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri',
     phone: '9046726365',
     gstin: '19ACRPD0341C1Z0',
