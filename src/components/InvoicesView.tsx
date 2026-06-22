@@ -48,7 +48,7 @@ export default function InvoicesView({ setPage }: { setPage: (page: string) => v
 
   // Business profile state
   const [businessProfile, setBusinessProfile] = useState<any>({
-    name: "Jiya's Arcade",
+    name: "Saral",
     address: 'N/A Santi Nagar main Road , 2n0 Dabgram Siliguri',
     phone: '9046726365',
     gstin: '19ACRPD0341C1Z0',

@@ -43,7 +43,7 @@ const OCR_TEMPLATES = [
   {
     id: 'bajaj-tv',
     label: "Bajaj Finance - LED TV Purchase",
-    text: `JIYA'S ARCADE - RETAIL TAX INVOICE
+    text: `SARAL - RETAIL TAX INVOICE
 Invoice No: INV-OCR-8821
 Date: 2026-06-05
 Customer: Devendra Prasad
@@ -60,7 +60,7 @@ Finance Company Name: Bajaj Finance`
   {
     id: 'hdb-ac',
     label: "HDB Finance - Split AC Purchase",
-    text: `JIYA'S ARCADE - RETAIL TAX INVOICE
+    text: `SARAL - RETAIL TAX INVOICE
 Invoice No: INV-OCR-4029
 Date: 2026-06-05
 Customer: Riya Sen
@@ -77,7 +77,7 @@ Finance Company Name: HDB Finance`
   {
     id: 'homecredit-fridge',
     label: "Home Credit - Refrigerator Purchase",
-    text: `JIYA'S ARCADE - RETAIL TAX INVOICE
+    text: `SARAL - RETAIL TAX INVOICE
 Invoice No: INV-OCR-5510
 Date: 2026-06-05
 Customer: Bikram Ghosh

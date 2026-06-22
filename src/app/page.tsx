@@ -80,7 +80,7 @@ export default function Home() {
 
       <main className="main">
         <header className="topbar">
-          <h2>{PAGE_TITLES[activePage] || "Jiya's Arcade Billing"}</h2>
+          <h2>{PAGE_TITLES[activePage] || "Saral Billing"}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span style={{ fontSize: '13px', color: 'var(--gray)', fontWeight: 600 }}>
               {new Date().toLocaleDateString('en-IN', {

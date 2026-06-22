@@ -38,7 +38,7 @@ export interface ExtractedInvoice {
 export const MOCK_INVENTORY_DOCS = [
   {
     filename: "LG_TV_PriceList_Screenshot.png",
-    text: `JIYA'S ARCADE - DISTRIBUTOR BATCH STOCK LIST
+    text: `SARAL - DISTRIBUTOR BATCH STOCK LIST
 ===========================================
 Brand: LG | Category: Television | Source: Wholesaler
 Items details:
@@ -51,7 +51,7 @@ Items details:
   },
   {
     filename: "Scanned_Samsung_AC_Ledger.jpg",
-    text: `JIYA'S ARCADE - SCANNED PHOTO OF INVENTORY LEDGER
+    text: `SARAL - SCANNED PHOTO OF INVENTORY LEDGER
 ================================================
 Date: 2026-06-05 | Brand: Samsung
 Category: Air Conditioner
@@ -63,7 +63,7 @@ Category: Air Conditioner
   },
   {
     filename: "Whirlpool_Fridges_PDF_Receipt.pdf",
-    text: `JIYA'S ARCADE - LOCAL STORES PRODUCTS LIST
+    text: `SARAL - LOCAL STORES PRODUCTS LIST
 ==========================================
 Category: Refrigerator | Brand: Whirlpool
 Whirlpool NeoFresh 265L (Model: NEO-265) | HSN: 84181000 | GST: 18%
@@ -138,7 +138,7 @@ Croma M/W conv 20 litre | Microwave | 85165000 | 3861556582`
 export const MOCK_INVOICE_DOCS = [
   {
     filename: "Invoice_Bajaj_Finance_Scan_09.png",
-    text: `JIYA'S ARCADE - HISTORICAL RETAIL BILLING
+    text: `SARAL - HISTORICAL RETAIL BILLING
 ==========================================
 Invoice No: INV-OCR-7721
 Date: 2026-06-05
@@ -154,7 +154,7 @@ EMI Amount: ₹1,500 / Month`
   },
   {
     filename: "Invoice_Cash_Receipt_489.pdf",
-    text: `JIYA'S ARCADE - RETAIL TAX INVOICE
+    text: `SARAL - RETAIL TAX INVOICE
 ==================================
 Invoice No: INV-OCR-3329
 Date: 2026-06-05

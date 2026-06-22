@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Jiya's Arcade — Billing & Inventory Suite",
-  description: "Professional billing, inventory, reporting, and customer-supplier management suite for Jiya's Arcade, Siliguri.",
+  title: "Saral — Billing & Inventory Suite",
+  description: "Professional billing, inventory, reporting, and customer-supplier management suite for Saral.",
 };
 
 export default function RootLayout({

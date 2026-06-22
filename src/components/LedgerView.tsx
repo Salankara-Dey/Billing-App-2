@@ -248,7 +248,7 @@ export default function LedgerView() {
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(249, 115, 22); // Orange brand color
-    doc.text("JIYA'S ARCADE", 14, 15);
+    doc.text("SARAL", 14, 15);
     
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');

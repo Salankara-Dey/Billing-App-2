@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, setActivePage, role = 'Admin' }: SidebarProps) {
-  const [businessName, setBusinessName] = useState("JIYA'S ARCADE");
+  const [businessName, setBusinessName] = useState("SARAL");
 
   useEffect(() => {
     loadBusinessName();
@@ -63,7 +63,7 @@ export default function Sidebar({ activePage, setActivePage, role = 'Admin' }: S
     }
     return (
       <>
-        JIYA'S <span>ARCADE</span>
+        SAR<span>AL</span>
       </>
     );
   };
