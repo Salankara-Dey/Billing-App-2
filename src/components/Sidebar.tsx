@@ -48,24 +48,9 @@ export default function Sidebar({ activePage, setActivePage, role = 'Admin' }: S
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
 
-  // Helper to color the last word orange (like the original design)
+  // Helper to render the logo text (rendered strictly in white)
   const renderLogoText = () => {
-    const nameStr = businessName.toUpperCase().trim();
-    const lastSpaceIdx = nameStr.lastIndexOf(' ');
-    if (lastSpaceIdx !== -1) {
-      const firstPart = nameStr.slice(0, lastSpaceIdx + 1);
-      const lastPart = nameStr.slice(lastSpaceIdx + 1);
-      return (
-        <>
-          {firstPart}<span>{lastPart}</span>
-        </>
-      );
-    }
-    return (
-      <>
-        SAR<span>AL</span>
-      </>
-    );
+    return businessName.toUpperCase().trim() || "SARAL";
   };
 
   return (
