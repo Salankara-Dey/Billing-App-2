@@ -567,6 +567,57 @@ export default function InventoryView() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
   };
 
+  const handleExportToExcel = () => {
+    if (filteredProducts.length === 0) {
+      alert('No inventory items to export.');
+      return;
+    }
+
+    try {
+      // Map products to a clean table structure for exporting
+      const dataToExport = filteredProducts.map((p, idx) => ({
+        '#': idx + 1,
+        'Product Name': p.name,
+        'Brand': p.brand || 'General',
+        'Category': p.category || 'General',
+        'SKU': p.sku || '',
+        'Barcode': p.barcode || '',
+        'Unit': p.unit || 'Nos',
+        'HSN/SAC Code': p.hsn_code || '',
+        'GST Percentage (%)': p.gst_percentage,
+        'Purchase Price (Excl. GST)': p.purchase_price,
+        'Selling Price (Excl. GST)': p.selling_price,
+        'MRP': p.mrp || p.selling_price,
+        'Current Stock': p.current_stock,
+        'Reorder Level': p.reorder_level,
+        'Remarks/Notes': p.notes || ''
+      }));
+
+      // Create sheet and workbook
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Current Inventory');
+
+      // Adjust column widths automatically
+      const maxLens = Object.keys(dataToExport[0]).map(key => {
+        let maxLen = key.length;
+        dataToExport.forEach(row => {
+          const val = (row as any)[key];
+          if (val !== null && val !== undefined) {
+            maxLen = Math.max(maxLen, String(val).length);
+          }
+        });
+        return { wch: maxLen + 2 };
+      });
+      worksheet['!cols'] = maxLens;
+
+      // Write and download
+      XLSX.writeFile(workbook, `electro_mart_inventory_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (err: any) {
+      alert(`Export failed: ${err.message || err}`);
+    }
+  };
+
   return (
     <div>
       {/* Navigation Tabs */}
@@ -601,6 +652,13 @@ export default function InventoryView() {
         <>
           <div className="section-header">
             <h3>Inventory Registry ({filteredProducts.length} items)</h3>
+            <button 
+              className="btn btn-green"
+              onClick={handleExportToExcel}
+              style={{ fontWeight: 600 }}
+            >
+              📥 Export to Excel
+            </button>
           </div>
 
           {/* Quick Product Entry Grid (Invoice Format) */}
